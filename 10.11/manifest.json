@@ -31,7 +31,7 @@
                 "changelog": "- Support for 10.11",
                 "targetAbi": "10.11.0.0",
                 "version": "3.0.0.0",
-                "sourceUrl": "https://github.com/n00bcodr/Jellyfin.Plugin.JavaScriptInjector/releases/download/3.0.0.0/Jellyfin.Plugin.JavaScriptInjector_10.11.0.zip",
+                "sourceUrl": "https://github.com/n00bcodr/Jellyfin-JavaScript-Injector/releases/download/3.0.0.0/Jellyfin.Plugin.JavaScriptInjector_10.11.0.zip",
                 "checksum": "1448F94FD472D789E0A2E711F6F929E2",
                 "timestamp": "2025-10-20T17:27:02"
             }
@@ -50,7 +50,7 @@
                 "changelog": "- Support for 10.11",
                 "targetAbi": "10.11.0.0",
                 "version": "3.0.0.0",
-                "sourceUrl": "https://github.com/n00bcodr/Jellyfin.Plugin.JellyTweaks/releases/download/3.0.0.0/Jellyfin.Plugin.JellyTweaks_10.11.0.zip",
+                "sourceUrl": "https://github.com/n00bcodr/JellyfinTweaks/releases/download/3.0.0.0/Jellyfin.Plugin.JellyTweaks_10.11.0.zip",
                 "checksum": "73313429BE665341BDB2539BA69A557D",
                 "timestamp": "2025-10-20T17:25:23"
             }

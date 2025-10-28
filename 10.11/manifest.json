@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/n00bcodr/Jellyfin-Enhanced/master/images/icon.png",
     "versions": [
       {
+        "changelog": "- Add [Authorize] to Jellyseerr and TMDB endpoints\n - Add check for TMDb link before adding ARR links\n - Enhance README with troubleshooting and error info\n - Add configurable tag cache TTL and cache clear for tags\n - Add language tags overlay with configurable positions for all tags\n - Add caching for file size and audio language lookups\n - Add theme detection and dynamic theming support\n - Refactor reviews processing intervals\n - Improve Continue Watching detection logic\n - Full Blown Release Notes Conversion!\n\n - Please add the manifest for 10.11 if you are on 10.11. https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/10.11/manifest.json",
+        "targetAbi": "10.11.0.0",
+        "version": "9.1.0.0",
+        "sourceUrl": "https://github.com/n00bcodr/Jellyfin-Enhanced/releases/download/9.1.0.0/Jellyfin.Plugin.JellyfinEnhanced_10.11.0.zip",
+        "checksum": "AE147D37B4AC67DD40F7A69EBC6B270D",
+        "timestamp": "2025-10-28T06:06:32"
+      },
+      {
         "changelog": "- Add placeholder and info for splash screen URL\n - Fix subtitle styling for Jellyfin 10.11\n - Watchlist from KefinTweaks\n - Add long press for 2x speed playback feature\n - Migrate Settings to Server!\n - Add option to link Jellyseerr site to Jellyseerr results\n - Add 'reviews expanded by default' setting\n",
         "targetAbi": "10.11.0.0",
         "version": "9.0.0.0",

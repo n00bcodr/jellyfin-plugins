@@ -76,6 +76,14 @@
     "imageUrl": "https://raw.githubusercontent.com/n00bcodr/jellyfin-javascript-injector/main/icon.png",
     "versions": [
       {
+        "changelog": "- Revise repository URL instructions in README\n - refactor: create javascript helper\n - feat: add plugin interface\n - chore: remove unused imports\n - fix: dont validate payload in plugin interface\n - docs: fix example formatting",
+        "targetAbi": "10.11.0.0",
+        "version": "3.1.0.0",
+        "sourceUrl": "https://github.com/n00bcodr/Jellyfin-JavaScript-Injector/releases/download/3.1.0.0/Jellyfin.Plugin.JavaScriptInjector_10.11.0.zip",
+        "checksum": "EA07AEB608FB3CC7FC76302B45ACE4D2",
+        "timestamp": "2025-11-19T19:19:09"
+      },
+      {
         "changelog": "- Fix script path for installations with base url",
         "targetAbi": "10.11.0.0",
         "version": "3.0.1.0",

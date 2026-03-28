@@ -308,6 +308,14 @@
     "imageUrl": "https://raw.githubusercontent.com/n00bcodr/jellyfin-javascript-injector/main/icon.png",
     "versions": [
       {
+        "changelog": "- Update README with new badge links and images\n - Update funding.yml\n - Create LICENSE\n - Implement XML sanitization for script entries and enhance configuration UI\n - Update configPage.html",
+        "targetAbi": "10.11.0.0",
+        "version": "3.4.0.0",
+        "sourceUrl": "https://github.com/n00bcodr/Jellyfin-JavaScript-Injector/releases/download/3.4.0.0/Jellyfin.Plugin.JavaScriptInjector_10.11.0.zip",
+        "checksum": "88A06677733EACCAD9D8CE3C94D972D5",
+        "timestamp": "2026-03-28T13:40:37"
+      },
+      {
         "changelog": "- Update README.md\n - Add quick enable/disable and remove buttons for scripts",
         "targetAbi": "10.11.0.0",
         "version": "3.3.0.0",

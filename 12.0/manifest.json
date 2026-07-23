@@ -1,0 +1,59 @@
+[
+  {
+    "name": "Jellyfin Enhanced",
+    "guid": "f69e946a-4b3c-4e9a-8f0a-8d7c1b2c4d9b",
+    "overview": "Jellyfin Enhanced and Jellyfin Elsewhere for a better Jellyfin experience.",
+    "description": "A combination of the Jellyfin Enhanced and Jellyfin Elsewhere userscripts, providing a comprehensive set of tweaks and features for Jellyfin.",
+    "owner": "n00bcodr",
+    "category": "General",
+    "imageUrl": "https://raw.githubusercontent.com/n00bcodr/Jellyfin-Enhanced/master/docs/images/icon.png",
+    "versions": [
+      {
+        "changelog": "- fix: duplicate approval notifications and un-approvable pending requests on available shows ([#658](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/658))\n - feat: centralize Seerr status logic in seerr-status.js\n - README: fix: Seerr URL ([#664](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/664))\n - docs: Formatting fixes ([#666](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/666))\n - fix: pick richest audio layout instead of first match in getChannelTag\n - fix: skip synthetic je:navigate event for no-op pushState/replaceState calls ([#657](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/657))\n - fix: allow Administrator API keys to access any user's settings files\n - feat: add admin-scoped write endpoints for reviews and bookmarks\n - chore(ci)(deps): bump actions/checkout from 6.0.3 to 7.0.0 ([#671](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/671))\n - chore(ci)(deps): bump trufflesecurity/trufflehog from 3.95.5 to 3.95.6 in the github-actions group ([#670](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/670))\n - fix: show Request More button when only specials season is unrequested\n - feat: add letterboxd link for people details pages\n - feat: show release/air date chip on item detail pages ([#661](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/661))\n - fix: show MusicVideo bookmarks in the Bookmarks Library\n - fix: skip Report Issue button entirely for non-reportable item types\n - feat: Jellyfin 12 compatibility ([#681](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/681))\n - Load Material Symbols Rounded for release icons\n - Show API keys in config form\n - chore(ci)(deps): bump the github-actions group with 2 updates ([#682](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/682))\n - chore(ci)(deps): bump actions/cache from 5.0.5 to 6.1.0 ([#683](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/683))\n - Admin visibility and management of user-hidden content + bug fixes ([#684](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/684))\n - feat: reliable Remove from Continue Watching + add Remove from Next Up (multi-select & confirm) ([#685](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/685))\n - fix: don't require both Sonarr and Radarr for Requests Page ([#689](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/689))\n - feat(spoiler-guard): per-user opt-in spoiler protection for unwatched content (Jellyfin 10.11 + 12) ([#691](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/691))\n - chore(ci)(deps): bump the github-actions group with 4 updates ([#696](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/696))\n - Fix MutationObserver leak in addUserPreferencesLink (one observer piled up per navigation) ([#694](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/694))\n - feat: serve third-party assets from a local CDN cache (+ off-thread tag-cache updates) ([#692](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/692))\n - feat(spoiler-guard): per-user image identity tags for native clients ([#700](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/700))\n - fix(jellyseerr): stop runaway search requests after leaving search page\n - fix(requests-tab): stop polling when a sibling home tab becomes active\n - fix(native-tabs): only log \"not on home page\" once per transition\n - fix(jellyseerr): sort server dropdown alphabetically, fix default selection\n - style(jellyseerr): restyle season/collection checkboxes as toggle switches\n - chore(ci)(deps): bump the github-actions group with 6 updates ([#703](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/703))\n - fix(tag-cache): stop re-saving the whole cache on no-op library events ([#704](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/704))\n - fix(tags): fix ignore-selector checks matching the wrong element\n - fix(perf): cap concurrent requests for provider and review fetches\n - feat(shortcuts): allow disabling individual keyboard shortcuts\n - feat(jellyseerr): add Seerr detail-page link with More Info modal integration\n - chore(ci)(deps): bump actions/setup-python from 6.3.0 to 7.0.0 ([#710](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/710))\n - chore(ci)(deps): bump the github-actions group with 3 updates ([#709](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/709))\n - chore(ci)(deps): bump actions/setup-dotnet from 5.4.0 to 6.0.0 ([#712](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/712))\n - chore(ci)(deps): bump actions/setup-node from 6.4.0 to 7.0.0 ([#711](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/711))\n - Fix rating normalization logic\n - fix(tags): memory-bounded tag cache builds + honor Server-Side Tag Cache setting (startup OOM crash loop) ([#713](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/713))\n - docs: API overhaul ([#668](https://github.com/n00bcodr/Jellyfin-Enhanced/issues/668))\n - docs: fix bookmark JSON casing and auth header per live server verification",
+        "targetAbi": "12.0.0.0",
+        "version": "12.0.0.0",
+        "sourceUrl": "https://github.com/n00bcodr/Jellyfin-Enhanced/releases/download/12.0.0.0/Jellyfin.Plugin.JellyfinEnhanced_12.0.0.zip",
+        "checksum": "CDF945315990FE417973B650848D39B3",
+        "timestamp": "2026-07-23T16:48:46"
+      }
+    ]
+  },
+  {
+    "name": "JavaScript Injector",
+    "guid": "f5a34f7b-2e8a-4e6a-a722-3a216a81b374",
+    "overview": "Inject custom javascript(s) to the Jellyfin Web UI",
+    "description": "Inject custom javascript(s) to the Jellyfin Web UI",
+    "owner": "n00bcodr",
+    "category": "General",
+    "imageUrl": "https://raw.githubusercontent.com/n00bcodr/jellyfin-javascript-injector/main/icon.png",
+    "versions": [
+      {
+        "changelog": "- Add search, drag-reorder, import/export, and unsaved-changes guard to config page",
+        "targetAbi": "10.11.0.0",
+        "version": "3.5.0.0",
+        "sourceUrl": "https://github.com/n00bcodr/Jellyfin-JavaScript-Injector/releases/download/3.5.0.0/Jellyfin.Plugin.JavaScriptInjector_10.11.0.zip",
+        "checksum": "AF0D6C50F02595974F5FA509974133C8",
+        "timestamp": "2026-07-19T18:31:45"
+      }
+    ]
+  },
+  {
+    "name": "Jellyfin Tweaks",
+    "guid": "dfee3828-01df-49df-85b1-5c2b75e5ea1a",
+    "overview": "Tweaks for Jellyfin",
+    "description": "Adds useful tweaks to Jellyfin. Based on the original JellyTweaks by gam24.",
+    "owner": "n00bcodr",
+    "category": "General",
+    "imageUrl": "https://raw.githubusercontent.com/n00bcodr/JellyfinTweaks/master/Jellyfin.Plugin.JellyTweaks/images/thumb.png",
+    "versions": [
+      {
+        "changelog": "- Revise installation instructions for Jellyfin plugins\n - Add display and video settings to plugin configuration\n - v3.1.0.0",
+        "targetAbi": "10.11.0.0",
+        "version": "3.1.0.0",
+        "sourceUrl": "https://github.com/n00bcodr/JellyfinTweaks/releases/download/3.1.0.0/Jellyfin.Plugin.JellyTweaks_10.11.0.zip",
+        "checksum": "0BC862688C9045D7C2793CBDA0AA8446",
+        "timestamp": "2026-01-18T19:36:36"
+      }
+    ]
+  }
+]

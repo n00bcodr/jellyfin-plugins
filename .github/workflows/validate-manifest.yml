@@ -1,0 +1,38 @@
+# Drop into n00bcodr/jellyfin-plugins as .github/workflows/validate-manifest.yml, with the
+# tooling from this proposal committed under tools/ INCLUDING tools/fixtures/ (the simulator
+# reads them relative to its own file). Fails the push if any of the four copies in
+# this repo diverge (the legacy copy in Jellyfin-Enhanced is only checked by --live), if any post-jf12 version lost its 12.0.0.0 row or ordering (the jprm tripwire),
+# if a newest checksum is wrong, or if the Jellyfin resolver source the scheme relies on changed.
+name: Validate plugin manifest
+
+on:
+  push:
+    paths: ["manifest.json", "12/manifest.json", "10.11/manifest.json", "10.10/manifest.json", "tools/**"]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"   # weekly upstream-drift check
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.x"
+      - name: Offline unit tests
+        run: cd tools && python3 -m unittest test_tooling
+      - name: Invariants + jprm tripwire + newest checksums
+        run: python3 tools/validate_manifest.py manifest.json --checksums 2
+      - name: All served copies identical
+        run: |
+          for f in 12/manifest.json 10.11/manifest.json 10.10/manifest.json; do
+            cmp manifest.json "$f" || { echo "::error::$f differs from manifest.json"; exit 1; }
+          done
+      - name: Resolver simulation against fixtures
+        run: python3 tools/simulate_jellyfin_resolver.py manifest.json
+      - name: Upstream Jellyfin resolver source unchanged
+        run: python3 tools/check_upstream.py

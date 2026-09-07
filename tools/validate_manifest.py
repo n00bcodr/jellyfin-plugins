@@ -26,6 +26,8 @@ def md5_of(url):
 def tripwire(manifest):
     bad = []
     by_guid = {p["guid"]: p for p in manifest}
+    if len(by_guid) != len(manifest):
+        bad.append("duplicate package GUIDs in manifest")
     for key, plugin in PLUGINS.items():
         pkg = by_guid.get(plugin["guid"])
         if pkg is None:
@@ -46,6 +48,13 @@ def tripwire(manifest):
                 bad.append(f"{plugin['name']} {version}: 12.0.0.0 row listed AFTER the 10.11.0.0 row")
     return bad
 
+def validate(manifest):
+    """Fail closed on invalid ordering or missing builds, before any caller writes."""
+    check(manifest)
+    bad = tripwire(manifest)
+    if bad:
+        sys.exit("validation failed:\n  " + "\n  ".join(bad))
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("manifest")
@@ -53,8 +62,8 @@ def main():
     a = ap.parse_args()
     with open(a.manifest, encoding="utf-8") as f:
         manifest = json.load(f)
-    check(manifest)                      # exits 1 with a message on failure
-    bad = tripwire(manifest)
+    validate(manifest)
+    bad = []
     if a.checksums:
         by_guid = {p["guid"]: p for p in manifest}
         for plugin in PLUGINS.values():

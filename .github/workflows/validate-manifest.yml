@@ -1,14 +1,12 @@
-# Drop into n00bcodr/jellyfin-plugins as .github/workflows/validate-manifest.yml, with the
-# tooling from this proposal committed under tools/ INCLUDING tools/fixtures/ (the simulator
-# reads them relative to its own file). Fails the push if any of the four copies in
-# this repo diverge (the legacy copy in Jellyfin-Enhanced is only checked by --live), if any post-jf12 version lost its 12.0.0.0 row or ordering (the jprm tripwire),
-# if a newest checksum is wrong, or if the Jellyfin resolver source the scheme relies on changed.
+# Require the validate-manifest job in a main-branch ruleset. A push check alone
+# is too late for files served directly from raw.githubusercontent.com/main.
 name: Validate plugin manifest
 
 on:
   push:
-    paths: ["manifest.json", "12/manifest.json", "10.11/manifest.json", "10.10/manifest.json", "tools/**"]
   pull_request:
+  merge_group:
+  workflow_dispatch:
   schedule:
     - cron: "0 6 * * 1"   # weekly upstream-drift check
 
@@ -16,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  validate-manifest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

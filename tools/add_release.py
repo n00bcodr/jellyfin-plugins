@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from jfversion import V, require_four, with_banner
 
 from plugins import PLUGINS
+from validate_manifest import validate
 
 def md5_of(url):
     h = hashlib.md5()
@@ -80,6 +81,7 @@ def main():
                     "sourceUrl": url, "checksum": md5_of(url), "timestamp": ts})
         print(f"  {tag} abi={abi} {asset} md5={new[-1]['checksum']}")
     pkg["versions"] = sorted(new + pkg["versions"], key=lambda v: (V(v["version"]), V(v["targetAbi"])), reverse=True)
+    validate(manifest)  # No replacement if any release is unpaired or incorrectly ordered.
 
     fd, tmp = tempfile.mkstemp(prefix=os.path.basename(a.manifest) + ".", dir=os.path.dirname(os.path.abspath(a.manifest)))
     try:

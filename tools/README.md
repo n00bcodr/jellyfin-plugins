@@ -4,7 +4,8 @@ This repository serves ONE manifest (`manifest.json`, mirrored byte-for-byte at 
 `10.10/`, and at the legacy path in the Jellyfin-Enhanced repo). Every plugin version appears once per
 build, higher `targetAbi` first; Jellyfin's own ABI filter and first-wins tie-break route each server
 to its build. **Never run jprm on this file**: it dedupes on version string and collapses every pair.
-The CI workflow refuses a collapsed file.
+The release and publishing helpers refuse an invalid manifest before replacing files.
+The CI check must also be required on the served branch to prevent bypass through a direct push.
 
 ## Release day
 
@@ -20,15 +21,35 @@ only for this proposal directory). Tags are bare (`12.6.0.0`, no `v`).
    `--changelog-file`, or they end up in the changelog).
 3. `python3 tools/simulate_jellyfin_resolver.py manifest.json` and
    `python3 tools/validate_manifest.py manifest.json --checksums 2`.
-4. `python3 tools/publish_manifest.py manifest.json --je-repo <JE checkout> --plugins-repo .`, commit
-   both repos, push back to back.
+4. `python3 tools/publish_manifest.py manifest.json --je-repo <JE checkout> --plugins-repo .`, then
+   commit to release branches and open PRs in both repositories. Merge both after their required
+   checks pass. Do not push manifest changes directly to `main`.
 5. `python3 tools/simulate_jellyfin_resolver.py manifest.json --live` until all five URLs report OK.
 6. Watch the analytics mismatch row (`jf10` target on a 12.x server).
 
-Never run jprm against these files. The CI workflow (`ci/validate-manifest.yml`, for `jellyfin-plugins`)
-fails a push if any of the four copies in `jellyfin-plugins` differ (the legacy copy in
-`Jellyfin-Enhanced` is only checked by `--live`), if any post-jf12 version lost either of its rows or
-their ordering, if a newest checksum is wrong, or if the upstream resolver source changed.
+Never run jprm against these files. `.github/workflows/validate-manifest.yml` validates all four
+copies on PRs, merge queues and pushes. It rejects missing build pairs, reversed order, duplicate
+packages, checksum mismatches and upstream source drift. The legacy Enhanced manifest has its own
+required check using an immutable revision of the same validator. The `--live` check confirms that
+all five URLs match after the two merges and GitHub's raw-content caches refresh.
+
+## Required maintainer setup
+
+An administrator must enable Actions and configure an **active main-branch ruleset in both
+repositories**. Workflow YAML cannot enforce branch protection by itself.
+
+- Require a pull request before merging.
+- Require status checks and require the branch to be up to date (or use the merge queue).
+- In `jellyfin-plugins`, require the GitHub Actions check **`validate-manifest`**.
+- In `Jellyfin-Enhanced`, require **`validate-legacy-manifest`** from its manifest workflow.
+- Leave the bypass list empty, including release bots and administrators; block force pushes and
+  branch deletion. Release automation must submit a PR and wait for validation rather than push
+  directly to the served branch.
+
+Until these rules are enabled, an unchecked direct push can still expose a bad manifest before
+push CI finishes. The helpers now fail closed, but they cannot prevent someone bypassing them.
+The legacy workflow pins the shared validator commit; update that pin deliberately when validator
+rules change. Enable the checks before publishing the first release with the unified manifest.
 
 ## Verified on real servers
 
@@ -39,8 +60,13 @@ three manifests served from a branch on a fork. Every claim above held: the stal
 version string), gives 10.11 the jf10 DLL, gives 10.10 its frozen line; the auto-update task on a server
 stuck with jf10 12.5.0.0 installed the jf12 zip of the next version; an explicitly chosen old version
 gives its only (jf10) build; and the runtime guard logs and reports the mismatch for a sideloaded jf10
-DLL on 12 and stays silent for the right DLL on either line. Harness, results and how to rerun are in
-`e2e/`.
+DLL on 12 and stays silent for the right DLL on either line.
+
+The publishing safety check was rerun on 7 Sep 2026 with reversed rows, missing jf12 or jf10 rows,
+duplicate package GUIDs and invalid JSON. Write mode and `--check` both rejected every invalid
+input without changing any of the five destination files. A valid manifest produced five identical
+copies. The release helper generated a correctly ordered pair and preserved its input on missing
+assets or an invalid resulting catalog. Additional verification scripts remain local.
 
 ## Files
 
@@ -54,7 +80,7 @@ DLL on 12 and stays silent for the right DLL on either line. Harness, results an
 | `check_upstream.py` | Pinned SHA-256 of the upstream source files the port was written from; `--pin` after re-verifying. |
 | `jfversion.py`, `plugins.py` | Shared `System.Version` semantics and banner helpers; the plugin table (guid, repo, assets, first jf12 release) and the five served paths (`PUBLISH_TARGETS`). |
 | `test_tooling.py` | `python3 -m unittest test_tooling`: version ordering, banner idempotence, merge conflict resolution, tripwire, fixture hashes. No network. |
-| `fixtures/` | The four manifests as they were live on 2 Sep 2026. To roll back the rollout, publish these back. |
+| `fixtures/` | Historical manifests for provenance and resolver checks. Do not publish these obsolete per-line catalogs through the unified-manifest release process. |
 
 ## Why two rows per version
 

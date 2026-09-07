@@ -19,10 +19,13 @@ FILES = [
 BRANCHES = ["master", "release-10.11.z"]
 WEB = "src/apps/dashboard/routes/plugins/plugin.tsx"
 
+# Re-reviewed 7 Sep 2026: bf5fb593 / 93345f81 change download timeout handling;
+# 9221e224 excludes bundled server plugins. Neither changes ABI filtering, stable
+# version ordering or first-row selection for these third-party plugins.
 PINNED = {
-    "jellyfin/jellyfin/master/Emby.Server.Implementations/Updates/InstallationManager.cs": "0e9ddc12969763af4a16c5c390666b69ca58adbb3852b89bd43b3fd88cc13bb8",
+    "jellyfin/jellyfin/master/Emby.Server.Implementations/Updates/InstallationManager.cs": "043173537a4a75f0cbfe676571f5e96140790eae00e83c58964d1cc6a19aee31",
     "jellyfin/jellyfin/master/Emby.Server.Implementations/Plugins/PluginManager.cs": "bc3974c99fac3576cc26107789c287f62c12e947c6d8cab5e39d5e103ea80c4a",
-    "jellyfin/jellyfin/master/Jellyfin.Api/Controllers/PackageController.cs": "c3d199a05a59f78373b1f911ba3da1e200b4f10b840cd5e670c074265ba23b54",
+    "jellyfin/jellyfin/master/Jellyfin.Api/Controllers/PackageController.cs": "4f161a98c2651af43e4ccea6cbaeda4a7c5cb4ac20258d9970a2380f6e45a34e",
     "jellyfin/jellyfin/master/MediaBrowser.Model/Updates/VersionInfo.cs": "86edb673ce08ec9c893153663fb9a5199a6e5c3ee4d60ed0827efac2a5809eca",
     "jellyfin/jellyfin-web/master/src/apps/dashboard/routes/plugins/plugin.tsx": "c207e1a3448840f604520665ee035b374e7ea5151ca1a998b42315674dbc0c53",
     "jellyfin/jellyfin/release-10.11.z/Emby.Server.Implementations/Updates/InstallationManager.cs": "1433450b91ed4c73d8437392f14055ea20178c7b4d99378af2cef4de995a3c0a",

@@ -1,5 +1,3 @@
-# Require the validate-manifest job in a main-branch ruleset. A push check alone
-# is too late for files served directly from raw.githubusercontent.com/main.
 name: Validate plugin manifest
 
 on:

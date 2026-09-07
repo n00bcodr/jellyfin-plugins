@@ -5,7 +5,6 @@ This repository serves ONE manifest (`manifest.json`, mirrored byte-for-byte at 
 build, higher `targetAbi` first; Jellyfin's own ABI filter and first-wins tie-break route each server
 to its build. **Never run jprm on this file**: it dedupes on version string and collapses every pair.
 The release and publishing helpers refuse an invalid manifest before replacing files.
-The CI check must also be required on the served branch to prevent bypass through a direct push.
 
 ## Release day
 
@@ -22,34 +21,16 @@ only for this proposal directory). Tags are bare (`12.6.0.0`, no `v`).
 3. `python3 tools/simulate_jellyfin_resolver.py manifest.json` and
    `python3 tools/validate_manifest.py manifest.json --checksums 2`.
 4. `python3 tools/publish_manifest.py manifest.json --je-repo <JE checkout> --plugins-repo .`, then
-   commit to release branches and open PRs in both repositories. Merge both after their required
-   checks pass. Do not push manifest changes directly to `main`.
+   commit to release branches and open PRs in both repositories. Merge both after validation
+   passes.
 5. `python3 tools/simulate_jellyfin_resolver.py manifest.json --live` until all five URLs report OK.
 6. Watch the analytics mismatch row (`jf10` target on a 12.x server).
 
 Never run jprm against these files. `.github/workflows/validate-manifest.yml` validates all four
 copies on PRs, merge queues and pushes. It rejects missing build pairs, reversed order, duplicate
 packages, checksum mismatches and upstream source drift. The legacy Enhanced manifest has its own
-required check using an immutable revision of the same validator. The `--live` check confirms that
+check using an immutable revision of the same validator. The `--live` check confirms that
 all five URLs match after the two merges and GitHub's raw-content caches refresh.
-
-## Required maintainer setup
-
-An administrator must enable Actions and configure an **active main-branch ruleset in both
-repositories**. Workflow YAML cannot enforce branch protection by itself.
-
-- Require a pull request before merging.
-- Require status checks and require the branch to be up to date (or use the merge queue).
-- In `jellyfin-plugins`, require the GitHub Actions check **`validate-manifest`**.
-- In `Jellyfin-Enhanced`, require **`validate-legacy-manifest`** from its manifest workflow.
-- Leave the bypass list empty, including release bots and administrators; block force pushes and
-  branch deletion. Release automation must submit a PR and wait for validation rather than push
-  directly to the served branch.
-
-Until these rules are enabled, an unchecked direct push can still expose a bad manifest before
-push CI finishes. The helpers now fail closed, but they cannot prevent someone bypassing them.
-The legacy workflow pins the shared validator commit; update that pin deliberately when validator
-rules change. Enable the checks before publishing the first release with the unified manifest.
 
 ## Verified on real servers
 

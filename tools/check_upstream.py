@@ -22,9 +22,12 @@ WEB = "src/apps/dashboard/routes/plugins/plugin.tsx"
 # Re-reviewed 7 Sep 2026: bf5fb593 / 93345f81 change download timeout handling;
 # 9221e224 excludes bundled server plugins. Neither changes ABI filtering, stable
 # version ordering or first-row selection for these third-party plugins.
+# Re-reviewed 11 Sep 2026: e1e319c (PluginManager.cs, master) only skips
+# re-downloading plugin images that already exist on disk. No change to ABI
+# filtering, version ordering or first-row selection.
 PINNED = {
     "jellyfin/jellyfin/master/Emby.Server.Implementations/Updates/InstallationManager.cs": "043173537a4a75f0cbfe676571f5e96140790eae00e83c58964d1cc6a19aee31",
-    "jellyfin/jellyfin/master/Emby.Server.Implementations/Plugins/PluginManager.cs": "bc3974c99fac3576cc26107789c287f62c12e947c6d8cab5e39d5e103ea80c4a",
+    "jellyfin/jellyfin/master/Emby.Server.Implementations/Plugins/PluginManager.cs": "5de68dbbe5d918c2cdfb4022fed8ffd6c07df625643a0f435269444505dccc70",
     "jellyfin/jellyfin/master/Jellyfin.Api/Controllers/PackageController.cs": "4f161a98c2651af43e4ccea6cbaeda4a7c5cb4ac20258d9970a2380f6e45a34e",
     "jellyfin/jellyfin/master/MediaBrowser.Model/Updates/VersionInfo.cs": "86edb673ce08ec9c893153663fb9a5199a6e5c3ee4d60ed0827efac2a5809eca",
     "jellyfin/jellyfin-web/master/src/apps/dashboard/routes/plugins/plugin.tsx": "c207e1a3448840f604520665ee035b374e7ea5151ca1a998b42315674dbc0c53",

@@ -1,17 +1,50 @@
 # Manifest tooling
 
-This repository serves ONE manifest (`manifest.json`, mirrored byte-for-byte at `12/`, `10.11/` and
-`10.10/`, and at the legacy path in the Jellyfin-Enhanced repo). Every plugin version appears once per
-build, higher `targetAbi` first; Jellyfin's own ABI filter and first-wins tie-break route each server
-to its build. **Never run jprm on this file**: it dedupes on version string and collapses every pair.
-The release and publishing helpers refuse an invalid manifest before replacing files.
+This repository serves ONE manifest (`manifest.json`), and every plugin's own repo serves a
+byte-for-byte copy of the exact same file (see below) -- so wherever a Jellyfin server points, it
+sees the full 3-plugin catalog. Every plugin version appears once per build, higher `targetAbi`
+first; Jellyfin's own ABI filter and first-wins tie-break route each server to its build. **Never
+run jprm on this file**: it dedupes on version string and collapses every pair. The release and
+publishing helpers refuse an invalid manifest before replacing files.
+
+## `jellyfin-plugins/manifest.json` is the master
+
+This repo's root `manifest.json` is the single source of truth for all three plugins. Every other
+served copy is a byte-identical mirror of it, written by `publish_manifest.py`, never edited
+directly:
+
+- `12/manifest.json`, `10.11/manifest.json`, `10.10/manifest.json` (this repo).
+- `Jellyfin-Enhanced/manifest.json`, `Jellyfin-JavaScript-Injector/manifest.json`,
+  `JellyfinTweaks/manifest.json` -- each plugin's own repo gets the full catalog too, not just its
+  own package, so every served URL (this repo's four, and all three plugin repos' legacy ones)
+  ends up identical.
+
+Each plugin's own `build.sh` (in its own repo) writes its new release into this master by guid,
+mirrors this repo's own root/12/10.11/10.10 copies from it, and commits both repos (its own
+`.csproj` bump, and this repo's four manifest.json). It does **not** touch the other two plugins'
+manifest.json, or even its own -- nothing is pushed automatically either way.
+
+`.github/workflows/sync-downstream.yml` in this repo is what actually updates the other three
+repos' own manifest.json: on push to `main` it pushes the same full-catalog copy into all three
+plugin repos. So a release isn't fully live until you've pushed both the plugin repo (the code
+change) and this repo (which triggers that workflow) -- pushing jellyfin-plugins is what makes the
+other two plugins' manifests catch up, not something build.sh does for you locally.
+
+**One-time setup for the sync-downstream workflow**: it needs a token with write access to the
+other three repos (the default `GITHUB_TOKEN` only has access to the repo the workflow runs in).
+1. Create a fine-grained personal access token (GitHub Settings -> Developer settings -> Personal
+   access tokens -> Fine-grained tokens) scoped to just `Jellyfin-Enhanced`,
+   `Jellyfin-JavaScript-Injector`, and `JellyfinTweaks`, with **Contents: Read and write**
+   permission, and an expiry you're comfortable renewing.
+2. In `jellyfin-plugins` -> Settings -> Secrets and variables -> Actions, add a repository secret
+   named `PLUGIN_REPOS_TOKEN` with that token's value.
+3. Renew it before it expires, or the workflow starts failing at the checkout step (loudly, in the
+   Actions tab) until you do.
 
 ## Release day
 
 All three plugins share the manifest files, so every one of them follows this. Needs `gh auth login`.
-Once the tooling lives under `tools/` in the `jellyfin-plugins` checkout, the working file is that
-repo's root `manifest.json`; pass it positionally (the scripts' default `manifest.unified.json` is
-only for this proposal directory). Tags are bare (`12.6.0.0`, no `v`).
+Tags are bare (`12.6.0.0`, no `v`).
 
 1. Tag and publish the GitHub release with **both** zips attached (`_12.0.0.zip` and `_10.11.0.zip`).
 2. `python3 tools/add_release.py <tag> manifest.json --plugin je|jsinjector|tweaks` (default `je`;
@@ -20,17 +53,16 @@ only for this proposal directory). Tags are bare (`12.6.0.0`, no `v`).
    `--changelog-file`, or they end up in the changelog).
 3. `python3 tools/simulate_jellyfin_resolver.py manifest.json` and
    `python3 tools/validate_manifest.py manifest.json --checksums 2`.
-4. `python3 tools/publish_manifest.py manifest.json --je-repo <JE checkout> --plugins-repo .`, then
-   commit to release branches and open PRs in both repositories. Merge both after validation
-   passes.
-5. `python3 tools/simulate_jellyfin_resolver.py manifest.json --live` until all five URLs report OK.
+4. `python3 tools/publish_manifest.py manifest.json --je-repo <checkout> --jsinjector-repo <checkout>
+   --tweaks-repo <checkout> --plugins-repo .`, then commit and push every repo that changed.
+5. `python3 tools/simulate_jellyfin_resolver.py manifest.json --live` until all served URLs report OK.
 6. Watch the analytics mismatch row (`jf10` target on a 12.x server).
 
-Never run jprm against these files. `.github/workflows/validate-manifest.yml` validates all four
-copies on PRs, merge queues and pushes. It rejects missing build pairs, reversed order, duplicate
-packages, checksum mismatches and upstream source drift. The legacy Enhanced manifest has its own
-check using an immutable revision of the same validator. The `--live` check confirms that
-all five URLs match after the two merges and GitHub's raw-content caches refresh.
+Never run jprm against these files. `.github/workflows/validate-manifest.yml` validates this
+repo's four copies on PRs, merge queues and pushes. It rejects missing build pairs, reversed
+order, duplicate packages, checksum mismatches and upstream source drift. The `--live` check
+confirms all seven served URLs match after every repo is pushed and GitHub's raw-content caches
+refresh.
 
 ## Verified on real servers
 
@@ -55,11 +87,12 @@ assets or an invalid resulting catalog. Additional verification scripts remain l
 |---|---|
 | `build_unified_manifest.py` | One-time migration: merge the four live manifests. Run once; re-running after the rollout is idempotent, but do not re-run between `add_release.py` and `publish_manifest.py` (it rebuilds from the live URLs and would drop the unpublished rows). `--only-paired`, `--no-annotate`. |
 | `add_release.py` | Per-release helper for any of the three plugins. Refuses to overwrite an existing version without `--force`. |
-| `publish_manifest.py` | Writes the five served copies into two local checkouts; `--check` for CI. |
+| `publish_manifest.py` | Writes the seven full-catalog served copies into four local checkouts; `--check` for CI. |
 | `validate_manifest.py` | Invariants, the anti-jprm tripwire, optional checksum verification. |
 | `simulate_jellyfin_resolver.py` | Port of the Jellyfin resolver paths above; `--live` post-rollout check. |
 | `check_upstream.py` | Pinned SHA-256 of the upstream source files the port was written from; `--pin` after re-verifying. |
-| `jfversion.py`, `plugins.py` | Shared `System.Version` semantics and banner helpers; the plugin table (guid, repo, assets, first jf12 release) and the five served paths (`PUBLISH_TARGETS`). |
+| `jfversion.py`, `plugins.py` | Shared `System.Version` semantics and banner helpers; the plugin table (guid, repo, assets, first jf12 release) and the seven served paths (`PUBLISH_TARGETS`). |
+| `describe_manifest_change.py` | Summarizes what changed between two manifest.json snapshots as `v<version> - <name>`, for sync-downstream.yml's commit messages. |
 | `test_tooling.py` | `python3 -m unittest test_tooling`: version ordering, banner idempotence, merge conflict resolution, tripwire, fixture hashes. No network. |
 | `fixtures/` | Historical manifests for provenance and resolver checks. Do not publish these obsolete per-line catalogs through the unified-manifest release process. |
 

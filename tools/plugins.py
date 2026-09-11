@@ -27,11 +27,15 @@ PLUGINS = {
     },
 }
 
-# Every URL that must serve the unified manifest, as (checkout, relative path).
+# Every URL that must serve the unified manifest, as (checkout, relative path). Every plugin's
+# own repo serves the full 3-plugin catalog, not just its own package -- so all four checkouts
+# end up byte-identical everywhere.
 PUBLISH_TARGETS = [
-    ("je",      "manifest.json"),          # legacy URL, n00bcodr/Jellyfin-Enhanced
-    ("plugins", "manifest.json"),          # canonical URL, n00bcodr/jellyfin-plugins
-    ("plugins", "12/manifest.json"),
-    ("plugins", "10.11/manifest.json"),
-    ("plugins", "10.10/manifest.json"),
+    ("je",         "manifest.json"),       # n00bcodr/Jellyfin-Enhanced
+    ("jsinjector", "manifest.json"),       # n00bcodr/Jellyfin-JavaScript-Injector
+    ("tweaks",     "manifest.json"),       # n00bcodr/JellyfinTweaks
+    ("plugins",    "manifest.json"),       # canonical URL, n00bcodr/jellyfin-plugins
+    ("plugins",    "12/manifest.json"),
+    ("plugins",    "10.11/manifest.json"),
+    ("plugins",    "10.10/manifest.json"),
 ]

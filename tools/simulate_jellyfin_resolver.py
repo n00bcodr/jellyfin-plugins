@@ -31,13 +31,15 @@ URL_10 = "https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/10.11
 URL_12 = "https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/12/manifest.json"
 URL_1010 = "https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/10.10/manifest.json"
 URL_NEW = "https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/manifest.json"
+URL_JSINJECTOR = "https://raw.githubusercontent.com/n00bcodr/Jellyfin-JavaScript-Injector/main/manifest.json"
+URL_TWEAKS = "https://raw.githubusercontent.com/n00bcodr/JellyfinTweaks/main/manifest.json"
 ABI12_SUFFIX = "_12.0.0.zip"
 ZIP = {"12.0.0.0": "Jellyfin.Plugin.JellyfinEnhanced_12.0.0.zip",
        "10.11.0.0": "Jellyfin.Plugin.JellyfinEnhanced_10.11.0.zip",
        "10.10.7.0": "Jellyfin.Plugin.JellyfinEnhanced_10.10.7.zip"}
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-FIXTURES = {URL_LEGACY: "legacy", URL_10: "10.11", URL_12: "12", URL_1010: "10.10"}
+FIXTURES = {URL_LEGACY: "legacy", URL_10: "10.11", URL_12: "12", URL_1010: "10.10", URL_NEW: "unified"}
 
 def fetch(url):
     with urllib.request.urlopen(url, timeout=30) as r:
@@ -59,7 +61,7 @@ def check_live(unified):
         return f"{names.get(guid, '?')} ({guid[:8]})"
     want = shape(unified)
     ok = True
-    for url in [URL_LEGACY, URL_10, URL_12, URL_1010, URL_NEW]:
+    for url in [URL_LEGACY, URL_10, URL_12, URL_1010, URL_NEW, URL_JSINJECTOR, URL_TWEAKS]:
         try:
             got = shape(fetch(url))
         except Exception as ex:  # noqa: BLE001
@@ -184,7 +186,15 @@ def zipname(v):
     return "-" if v is None else f"{v['version']} -> {v['sourceUrl'].rsplit('/', 1)[-1]}"
 
 # ---- scenarios ---------------------------------------------------------------
-def with_next_release(manifest, kind, version="12.6.0.0"):
+def next_version_after(manifest, guid=JE_GUID):
+    """One release above whatever is the highest real version for `guid` in `manifest`, so the
+    synthetic 'next release' used to test healing never falls behind a real release that has
+    since shipped (which would violate the descending-sort invariant MergeSortedList relies on)."""
+    versions = [V(v["version"]) for p in manifest if p["guid"] == guid for v in p["versions"]]
+    major, minor, _, _ = max(versions) if versions else (0, 0, 0, 0)
+    return f"{major}.{minor + 1}.0.0"
+
+def with_next_release(manifest, kind, version):
     """Prepend a fake next release in the shape that manifest would carry (same zips)."""
     abis = {"legacy": ["10.11.0.0"], "10.11": ["10.11.0.0"], "12": ["12.0.0.0"], "10.10": [], "unified": ["12.0.0.0", "10.11.0.0"]}[kind]
     m = copy.deepcopy(manifest)
@@ -213,7 +223,7 @@ def run():
     paths = [a for a in args if not a.startswith("-")]
     usage = ("usage: simulate_jellyfin_resolver.py [manifest.json] [--live]\n"
              "  default: prove the layouts against fixtures/ and the given (or ./manifest.unified.json) unified file\n"
-             "  --live : fetch the five URLs and check each serves that unified file, in order")
+             "  --live : fetch the seven URLs and check each serves that unified file, in order")
     if flags & {"-h", "--help"}:
         print(usage); return 0
     if flags - {"--live"} or len(paths) > 1:
@@ -226,12 +236,19 @@ def run():
         print("\nevery URL serves the unified manifest:", ok)
         return 0 if ok else 1
     mlegacy, m10, m12, m1010 = fixture(URL_LEGACY), fixture(URL_10), fixture(URL_12), fixture(URL_1010)
-    # Row ids: "<host>:latest", "<host>:12.5.0.0", "victim:@12.6". Each layout lists exactly the rows
+    # The BAD/FIX layouts below demonstrate the migration's before/after at the moment it
+    # happened (latest release then: 12.5.0.0), using this frozen fixture rather than the live
+    # `unified` (the manifest.json passed on the command line) -- otherwise every real release
+    # since would shift what "latest" resolves to and desync those layouts from their own
+    # documented expected-bad-rows (see fixtures/README.md; this is what broke CI in 12.6.0.0/12.7.0.0).
+    munified = fixture(URL_NEW)
+    # Row ids: "<host>:latest", "<host>:12.5.0.0", "victim:@next". Each layout lists exactly the rows
     # that are EXPECTED to resolve to the wrong zip (or nothing). A layout passes only if the set of
     # actually-bad rows equals that set, so a regression inside a TODAY layout cannot hide behind
     # "it was supposed to fail anyway".
     H107, H1011, H12, H13 = "10.10.7", "10.11.11", "12.0.0", "13.0.0"
-    jf12_rows = {f"{H12}:latest", f"{H12}:12.5.0.0", f"{H13}:latest", f"{H13}:12.5.0.0", "victim:@12.6"}
+    NEXT_VERSION = next_version_after(munified)
+    jf12_rows = {f"{H12}:latest", f"{H12}:12.5.0.0", f"{H13}:latest", f"{H13}:12.5.0.0", "victim:@next"}
     layouts = [
         ("TODAY  legacy JE-repo manifest.json only",
             jf12_rows,
@@ -253,16 +270,16 @@ def run():
             [("JE 12", URL_12, m12, "12"), ("JE 10.11", URL_10, m10, "10.11")]),
         ("BAD    transition: stale legacy first + new unified URL",
             jf12_rows,
-            [("JE legacy", URL_LEGACY, mlegacy, "legacy"), ("JE", URL_NEW, unified, "unified")]),
+            [("JE legacy", URL_LEGACY, mlegacy, "legacy"), ("JE", URL_NEW, munified, "unified")]),
         ("FIX    unified manifest at ONE url",
             set(),
-            [("JE", URL_NEW, unified, "unified")]),
+            [("JE", URL_NEW, munified, "unified")]),
         ("FIX    unified served at legacy url + new url",
             set(),
-            [("JE legacy", URL_LEGACY, unified, "unified"), ("JE", URL_NEW, unified, "unified")]),
+            [("JE legacy", URL_LEGACY, munified, "unified"), ("JE", URL_NEW, munified, "unified")]),
         ("FIX    unified served at both old jellyfin-plugins urls",
             set(),
-            [("JE 10.11", URL_10, unified, "unified"), ("JE 12", URL_12, unified, "unified")]),
+            [("JE 10.11", URL_10, munified, "unified"), ("JE 12", URL_12, munified, "unified")]),
     ]
     hosts = [(H107, V("10.10.7.0")), (H1011, V("10.11.11.0")), (H12, V("12.0.0.0")), (H13, V("13.0.0.0"))]
     all_ok = True
@@ -288,11 +305,11 @@ def run():
         # the 3 victims: jf10 build 12.5.0.0 running on Jellyfin 12; what does the daily PluginUpdateTask do?
         hv = V("12.0.0.0")
         upd_now = auto_update(hv, repos, V("12.5.0.0"))
-        nxt = [(n, u, with_next_release(m, kind)) for n, u, m, kind in repos3]
+        nxt = [(n, u, with_next_release(m, kind, NEXT_VERSION)) for n, u, m, kind in repos3]
         upd_next = auto_update(hv, nxt, V("12.5.0.0"))
-        m_heal = judge("victim:@12.6", upd_next, ZIP["12.0.0.0"], "12.6.0.0")
+        m_heal = judge("victim:@next", upd_next, ZIP["12.0.0.0"], NEXT_VERSION)
         print(f"  {'victim: jf10 12.5.0.0 on JF12':<32} auto-update today:  {zipname(upd_now)}")
-        print(f"  {'':<32} auto-update @12.6:  {m_heal} {zipname(upd_next)}")
+        print(f"  {'':<32} auto-update @next ({NEXT_VERSION}): {m_heal} {zipname(upd_next)}")
         if actual_bad == expected_bad:
             print(f"  => {'PASS' if not actual_bad else 'FAILS'} exactly as documented")
         else:

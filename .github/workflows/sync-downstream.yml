@@ -1,0 +1,104 @@
+name: Sync manifests to plugin repos
+
+# jellyfin-plugins/manifest.json is the master copy. Whenever it changes on main, push the same
+# full 3-plugin catalog into every other repo's manifest.json (Jellyfin-Enhanced,
+# Jellyfin-JavaScript-Injector, JellyfinTweaks) so all four are byte-identical.
+#
+# This is THE way those three repos' own manifest.json get updated -- build.sh only ever touches
+# jellyfin-plugins (its master and its own root/12/10.11/10.10 copies), never the other repos
+# directly. So a release isn't fully synced until this workflow has run after you push
+# jellyfin-plugins. Needs a repo secret PLUGIN_REPOS_TOKEN: a token with contents:read/write on
+# the three plugin repos below (the default GITHUB_TOKEN can't reach outside this repo).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "manifest.json"
+      - "12/manifest.json"
+      - "10.11/manifest.json"
+      - "10.10/manifest.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout jellyfin-plugins
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: jellyfin-plugins
+
+      - name: Checkout Jellyfin-Enhanced
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: n00bcodr/Jellyfin-Enhanced
+          token: ${{ secrets.PLUGIN_REPOS_TOKEN }}
+          path: Jellyfin-Enhanced
+
+      - name: Checkout Jellyfin-JavaScript-Injector
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: n00bcodr/Jellyfin-JavaScript-Injector
+          token: ${{ secrets.PLUGIN_REPOS_TOKEN }}
+          path: Jellyfin-JavaScript-Injector
+
+      - name: Checkout JellyfinTweaks
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: n00bcodr/JellyfinTweaks
+          token: ${{ secrets.PLUGIN_REPOS_TOKEN }}
+          path: JellyfinTweaks
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.x"
+
+      - name: Validate master manifest and its own served copies
+        working-directory: jellyfin-plugins
+        run: |
+          python3 tools/validate_manifest.py manifest.json
+          for f in 12/manifest.json 10.11/manifest.json 10.10/manifest.json; do
+            cmp manifest.json "$f" || { echo "::error::$f differs from manifest.json"; exit 1; }
+          done
+
+      - name: Snapshot each downstream repo's manifest.json before overwriting it
+        run: |
+          for repo in Jellyfin-Enhanced Jellyfin-JavaScript-Injector JellyfinTweaks; do
+            f="$GITHUB_WORKSPACE/$repo/manifest.json"
+            [ -f "$f" ] && cp "$f" "/tmp/before-$repo.json" || echo '[]' > "/tmp/before-$repo.json"
+          done
+
+      - name: Fan out to every plugin repo's own manifest.json
+        working-directory: jellyfin-plugins
+        run: |
+          python3 tools/publish_manifest.py manifest.json \
+            --je-repo "$GITHUB_WORKSPACE/Jellyfin-Enhanced" \
+            --jsinjector-repo "$GITHUB_WORKSPACE/Jellyfin-JavaScript-Injector" \
+            --tweaks-repo "$GITHUB_WORKSPACE/JellyfinTweaks" \
+            --plugins-repo "$GITHUB_WORKSPACE/jellyfin-plugins"
+
+      - name: Commit and push each downstream repo
+        run: |
+          for repo in Jellyfin-Enhanced Jellyfin-JavaScript-Injector JellyfinTweaks; do
+            cd "$GITHUB_WORKSPACE/$repo"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            if git diff --quiet -- manifest.json; then
+              echo "no manifest changes in $repo"
+              continue
+            fi
+            # Same "v<version> - <plugin name>" style build.sh uses for its own commits, tagged
+            # below so it's clear in the log this one was pushed by the workflow, not build.sh.
+            SUMMARY=$(python3 "$GITHUB_WORKSPACE/jellyfin-plugins/tools/describe_manifest_change.py" \
+              "/tmp/before-$repo.json" manifest.json)
+            if [ -z "$SUMMARY" ]; then
+              SUMMARY="manifest reordered/reformatted, no version change"
+            fi
+            git add manifest.json
+            git commit -m "$SUMMARY (synced from jellyfin-plugins)"
+            git push
+          done

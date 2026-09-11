@@ -1,11 +1,21 @@
 #!/usr/bin/env python3
 """
-Copy the unified manifest to every path that a live URL is served from, in two local checkouts,
-after validating ABI ordering and paired builds. Invalid input writes nothing.
+Copy the unified manifest to every path that a live URL is served from, after validating ABI
+ordering and paired builds. Invalid input writes nothing. Every plugin's own repo gets the full
+3-plugin catalog, not just its own package -- every checkout passed ends up byte-identical.
 
-    python3 publish_manifest.py --je-repo /path/to/Jellyfin-Enhanced --plugins-repo /path/to/jellyfin-plugins [manifest.unified.json] [--check]
+--plugins-repo (n00bcodr/jellyfin-plugins) is always required; --je-repo, --jsinjector-repo and
+--tweaks-repo are each optional -- pass whichever local checkouts you actually have. build.sh only
+passes --plugins-repo, to mirror this repo's own root/12/10.11/10.10 copies; a full manual release
+(or .github/workflows/sync-downstream.yml, which checks out all four) passes every flag to reach
+every repo in one run:
 
-It only writes files. Committing and pushing is yours to do (both repos, back to back), and
+    python3 publish_manifest.py --je-repo /path/to/Jellyfin-Enhanced \
+        --jsinjector-repo /path/to/Jellyfin-JavaScript-Injector \
+        --tweaks-repo /path/to/JellyfinTweaks \
+        --plugins-repo /path/to/jellyfin-plugins [manifest.unified.json] [--check]
+
+It only writes files. Committing and pushing is yours to do (every repo passed, back to back), and
 `simulate_jellyfin_resolver.py --live` is the check that the URLs actually serve it afterwards.
 --check writes nothing and exits 1 if any target differs from the unified file (use it in CI).
 """
@@ -16,11 +26,14 @@ from validate_manifest import validate
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("manifest", nargs="?", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "manifest.unified.json"))
-    ap.add_argument("--je-repo", required=True, help="local checkout of n00bcodr/Jellyfin-Enhanced")
+    ap.add_argument("--je-repo", help="local checkout of n00bcodr/Jellyfin-Enhanced")
+    ap.add_argument("--jsinjector-repo", help="local checkout of n00bcodr/Jellyfin-JavaScript-Injector")
+    ap.add_argument("--tweaks-repo", help="local checkout of n00bcodr/JellyfinTweaks")
     ap.add_argument("--plugins-repo", required=True, help="local checkout of n00bcodr/jellyfin-plugins")
     ap.add_argument("--check", action="store_true", help="only report which targets differ; write nothing")
     a = ap.parse_args()
-    roots = {"je": a.je_repo, "plugins": a.plugins_repo}
+    roots = {"je": a.je_repo, "jsinjector": a.jsinjector_repo, "tweaks": a.tweaks_repo, "plugins": a.plugins_repo}
+    roots = {k: v for k, v in roots.items() if v}    # only the repos actually passed
     for r in roots.values():
         if not os.path.exists(os.path.join(r, ".git")):      # a file in a worktree, a dir otherwise
             sys.exit(f"{r} is not a git checkout")
@@ -31,6 +44,8 @@ def main():
     validate(json.loads(payload))
     stale = []
     for which, rel in PUBLISH_TARGETS:
+        if which not in roots:
+            continue
         dest = os.path.join(roots[which], rel)
         same = False
         if os.path.exists(dest):
@@ -57,7 +72,7 @@ def main():
     if a.check and stale:
         sys.exit(f"{len(stale)} target(s) do not match the unified manifest")
     if not a.check:
-        print("now: commit BOTH repos, push back to back, then run simulate_jellyfin_resolver.py --live")
+        print("now: commit every repo passed above, push back to back, then run simulate_jellyfin_resolver.py --live")
 
 if __name__ == "__main__":
     main()

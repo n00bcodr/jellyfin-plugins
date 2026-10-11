@@ -7,8 +7,8 @@ name: Sync manifests to plugin repos
 # This is THE way those three repos' own manifest.json get updated -- build.sh only ever touches
 # jellyfin-plugins (its master and its own root/12/10.11/10.10 copies), never the other repos
 # directly. So a release isn't fully synced until this workflow has run after you push
-# jellyfin-plugins. Needs a repo secret PLUGIN_REPOS_TOKEN: a token with contents:read/write on
-# the three plugin repos below (the default GITHUB_TOKEN can't reach outside this repo).
+# jellyfin-plugins. Needs repo secrets BOT_CLIENT_ID and BOT_PRIVATE_KEY for the bot app, which must have
+# contents:read/write on the three plugin repos below (the default GITHUB_TOKEN can't reach outside this repo).
 
 on:
   push:
@@ -32,25 +32,39 @@ jobs:
         with:
           path: jellyfin-plugins
 
+      # Short-lived token from the bot app (installed on the three repos below) instead of a
+      # personal access token that expires.
+      - name: Generate bot token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.BOT_CLIENT_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          owner: n00bcodr
+          repositories: |
+            Jellyfin-Enhanced
+            Jellyfin-JavaScript-Injector
+            JellyfinTweaks
+
       - name: Checkout Jellyfin-Enhanced
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: n00bcodr/Jellyfin-Enhanced
-          token: ${{ secrets.PLUGIN_REPOS_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           path: Jellyfin-Enhanced
 
       - name: Checkout Jellyfin-JavaScript-Injector
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: n00bcodr/Jellyfin-JavaScript-Injector
-          token: ${{ secrets.PLUGIN_REPOS_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           path: Jellyfin-JavaScript-Injector
 
       - name: Checkout JellyfinTweaks
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: n00bcodr/JellyfinTweaks
-          token: ${{ secrets.PLUGIN_REPOS_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           path: JellyfinTweaks
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
